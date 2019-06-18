@@ -9,13 +9,16 @@ namespace flight.etl.app
     {
         private readonly ILogger _logger;
         private readonly IApplicationLifetime _appLifetime;
+        private App _app;
 
         public LifetimeEventsHostedService(
             ILogger<LifetimeEventsHostedService> logger,
-            IApplicationLifetime appLifetime)
+            IApplicationLifetime appLifetime,
+            App app)
         {
             _logger = logger;
             _appLifetime = appLifetime;
+            _app = app;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -23,6 +26,8 @@ namespace flight.etl.app
             _appLifetime.ApplicationStarted.Register(OnStarted);
             _appLifetime.ApplicationStopping.Register(OnStopping);
             _appLifetime.ApplicationStopped.Register(OnStopped);
+
+            _app.ProcessFlightEvents();
 
             return Task.CompletedTask;
         }

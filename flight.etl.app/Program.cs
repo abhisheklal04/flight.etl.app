@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Threading.Tasks;
+using flight.etl.app.Common;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -26,7 +27,7 @@ namespace flight.etl.app
                         $"appsettings.{hostContext.HostingEnvironment.EnvironmentName}.json",
                         optional: true);
                     configApp.AddEnvironmentVariables(prefix: "PREFIX_");
-                    configApp.AddCommandLine(args);                    
+                    configApp.AddCommandLine(args);
                 })                
                 .ConfigureLogging((hostContext, logging) =>
                 {
@@ -36,9 +37,17 @@ namespace flight.etl.app
                 })
                 .ConfigureServices((hostContext, services) =>
                 {
-                    // add services
+                    services.AddOptions();
+
+                    var flightData = hostContext.Configuration.GetSection("FlightData");
+                    services.Configure<FlightDataSettings>(flightData);
+
+                    // add services                                       
+                    
                     services.AddHostedService<LifetimeEventsHostedService>();
                     //services.AddHostedService<TimedHostedService>();
+
+                    services.AddTransient<App>();
                 })
                 .UseConsoleLifetime()
                 .Build();

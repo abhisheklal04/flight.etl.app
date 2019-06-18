@@ -28,7 +28,7 @@ namespace flight.etl.app
 
         private void DoWork(object state)
         {
-            _logger.LogInformation("Timed Background Service is working.");
+            _logger.LogInformation("Timed Background Service is working. " + DateTime.Now.Ticks);
         }
 
         public Task StopAsync(CancellationToken cancellationToken)

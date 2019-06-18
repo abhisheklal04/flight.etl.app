@@ -28,5 +28,6 @@
 
   <ItemGroup>
     <Folder Include="Logs\" />
+    <Folder Include="Helpers\" />
   </ItemGroup>
 </Project>

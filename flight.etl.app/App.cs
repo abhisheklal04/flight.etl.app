@@ -6,36 +6,33 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using flight.etl.app.Common;
+using Microsoft.Extensions.Options;
 
-namespace flight.etl.app1
+namespace flight.etl.app
 {
-    public enum EventType
-    {
-        Departure,
-        Arrival
-    }
-
-    class Program1
-    {
-        static readonly string BaseDirectory = "C:/Projects/flight.etl.app/ProcessorRoot/";
-        static readonly string InputDirectory = "01 - Input";
-        static readonly string RawDirectory = "02 - RAW";
-        static readonly string ExceptionDirectory = "03 - Exception";
-        static readonly string CuratedDirectory = "04 - Curated";
+    public class App
+    {   
         static long FileProcessingTimeStamp;
         static readonly Dictionary<EventType, JArray> EventsGroupedByType = new Dictionary<EventType, JArray>();
+        FlightDataSettings _flightDataSettings;
 
-        static void Main1(string[] args)
+        public App(IOptions<FlightDataSettings> options)
         {
-            foreach (string currentFile in Directory.EnumerateFiles(Path.Combine(BaseDirectory, InputDirectory)))
+            _flightDataSettings = options.Value;            
+        }
+
+        public void ProcessFlightEvents()
+        {
+            foreach (string currentFile in Directory.EnumerateFiles(Path.Combine(_flightDataSettings.BaseDirectory, _flightDataSettings.InputDirectory)))
             {
                 FileProcessingTimeStamp = DateTime.Now.Ticks;
 
                 var fileName = Path.GetFileName(currentFile);
 
-                Directory.Move(currentFile, Path.Combine(BaseDirectory, RawDirectory));
+                Directory.Move(currentFile, Path.Combine(_flightDataSettings.BaseDirectory, _flightDataSettings.RawDirectory+"/"+ fileName));
 
-                string contents = File.ReadAllText(Path.Combine(BaseDirectory, RawDirectory + "/" + fileName));                                                                                                                                                                                                                                                                                           
+                string contents = File.ReadAllText(Path.Combine(_flightDataSettings.BaseDirectory, _flightDataSettings.RawDirectory + "/" + fileName));
 
                 var eventsList = ParseEventJsonData(contents);
 
@@ -47,13 +44,13 @@ namespace flight.etl.app1
             }
         }
 
-        static JArray ParseEventJsonData(string contents)
+        JArray ParseEventJsonData(string contents)
         {
             JArray eventsList = JArray.Parse(contents);
             return eventsList;
         }
 
-        static void ValidateEvent(JObject eventData) 
+        void ValidateEvent(JObject eventData) 
         {
             var eventType = eventData["eventType"].ToString();
             if (eventType == "Departure")
@@ -82,17 +79,17 @@ namespace flight.etl.app1
             }
         }
 
-        static void ValidateDepartureFile(JObject jsondata)
+        void ValidateDepartureFile(JObject jsondata)
         {
             // validates the event and raises the exception
         }
 
-        static void ValidateArrivalFile(JObject jsondata)
+        void ValidateArrivalFile(JObject jsondata)
         {
             // validates the event and raises the exception
         }
 
-        static void AddNewEventToEventGroup(EventType eventType, JObject eventData)
+        void AddNewEventToEventGroup(EventType eventType, JObject eventData)
         {
             if (EventsGroupedByType.ContainsKey(eventType))
             {
@@ -100,7 +97,7 @@ namespace flight.etl.app1
             }
         }
 
-        static void SaveGroupedEventsToFiles()
+        void SaveGroupedEventsToFiles()
         {
             // iterate events and save them their files.
         }
