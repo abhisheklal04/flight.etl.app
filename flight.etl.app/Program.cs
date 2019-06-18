@@ -1,109 +1,56 @@
-﻿using System.Diagnostics;
-using System.IO;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.IO;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace flight.etl.app
 {
-    public enum EventType
+    public class Program
     {
-        Departure,
-        Arrival
-    }
-
-    class Program
-    {
-        static readonly string BaseDirectory = "C:/Projects/flight.etl.app/ProcessorRoot/";
-        static readonly string InputDirectory = "01 - Input";
-        static readonly string RawDirectory = "02 - RAW";
-        static readonly string ExceptionDirectory = "03 - Exception";
-        static readonly string CuratedDirectory = "04 - Curated";
-        static long FileProcessingTimeStamp;
-        static readonly Dictionary<EventType, JArray> EventsGroupedByType = new Dictionary<EventType, JArray>();
-
-        static void Main(string[] args)
-        {
-            foreach (string currentFile in Directory.EnumerateFiles(Path.Combine(BaseDirectory, InputDirectory)))
-            {
-                FileProcessingTimeStamp = DateTime.Now.Ticks;
-
-                var fileName = Path.GetFileName(currentFile);
-
-                Directory.Move(currentFile, Path.Combine(BaseDirectory, RawDirectory));
-
-                string contents = File.ReadAllText(Path.Combine(BaseDirectory, RawDirectory + "/" + fileName));
-
-                var eventsList = ParseEventJsonData(contents);
-
-                foreach (JObject eventData in eventsList.Children<JObject>())
+        public static async Task Main(string[] args)
+        {            
+            var host = new HostBuilder()
+                .ConfigureHostConfiguration(configHost =>
                 {
-                    Debug.WriteLine(eventData.ToString());
-                    ValidateEvent(eventData);
-                }
-            }
-        }
-
-        static JArray ParseEventJsonData(string contents)
-        {
-            JArray eventsList = JArray.Parse(contents);
-            return eventsList;
-        }
-
-        static void ValidateEvent(JObject eventData) 
-        {
-            var eventType = eventData["eventType"].ToString();
-            if (eventType == "Departure")
-            {
-                Debug.WriteLine("Departure data detected");
-                try
+                    configHost.SetBasePath(Directory.GetCurrentDirectory());
+                    configHost.AddJsonFile("hostsettings.json", optional: true);
+                    configHost.AddEnvironmentVariables(prefix: "PREFIX_");
+                    configHost.AddCommandLine(args);
+                })
+                .ConfigureAppConfiguration((hostContext, configApp) =>
                 {
-                    ValidateDepartureFile(eventData);
-                }
-                catch(Exception e)
+                    configApp.AddJsonFile("appsettings.json", optional: true);
+                    configApp.AddJsonFile(
+                        $"appsettings.{hostContext.HostingEnvironment.EnvironmentName}.json",
+                        optional: true);
+                    configApp.AddEnvironmentVariables(prefix: "PREFIX_");
+                    configApp.AddCommandLine(args);                    
+                })                
+                .ConfigureLogging((hostContext, logging) =>
                 {
-                    // log error
-                }
-            }
-            else if (eventType == "Arrival")
-            {
-                Debug.WriteLine("Arrival data detected");
-                try
+                    logging.AddConfiguration(hostContext.Configuration.GetSection("Logging"));
+                    logging.AddConsole();
+                    logging.AddDebug();
+                })
+                .ConfigureServices((hostContext, services) =>
                 {
-                    ValidateArrivalFile(eventData);
-                }
-                catch (Exception e)
-                {
-                    // log error
-                }
-            }
+                    // add services
+                    services.AddHostedService<LifetimeEventsHostedService>();
+                    //services.AddHostedService<TimedHostedService>();
+                })
+                .UseConsoleLifetime()
+                .Build();
+
+            // adding file logging
+            var loggerFactory = host.Services.GetRequiredService<ILoggerFactory>();
+            loggerFactory.AddFile("Logs/mylog-{Date}.txt");
+
+            await host.RunAsync();
         }
 
-        static void ValidateDepartureFile(JObject jsondata)
-        {
-            // validates the event and raises the exception
-        }
-
-        static void ValidateArrivalFile(JObject jsondata)
-        {
-            // validates the event and raises the exception
-        }
-
-        static void AddNewEventToEventGroup(EventType eventType, JObject eventData)
-        {
-            if (EventsGroupedByType.ContainsKey(eventType))
-            {
-                EventsGroupedByType[eventType].Add(eventData);
-            }
-        }
-
-        static void SaveGroupedEventsToFiles()
-        {
-            // iterate events and save them their files.
-        }
-
+        
     }
 
 }
