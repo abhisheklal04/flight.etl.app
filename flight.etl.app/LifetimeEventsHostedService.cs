@@ -27,7 +27,7 @@ namespace flight.etl.app
             _appLifetime.ApplicationStopping.Register(OnStopping);
             _appLifetime.ApplicationStopped.Register(OnStopped);
 
-            _app.ProcessFlightEvents();
+            _app.StartBatchProcess();
 
             return Task.CompletedTask;
         }

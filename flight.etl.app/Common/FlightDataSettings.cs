@@ -11,5 +11,6 @@ namespace flight.etl.app.Common
         public string RawDirectory { get; set; }
         public string ExceptionDirectory { get; set; }
         public string CuratedDirectory { get; set; }
+        public string ValidatorsDirectory { get; set; }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Threading.Tasks;
 using flight.etl.app.Common;
+using flight.etl.app.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -48,6 +49,7 @@ namespace flight.etl.app
                     //services.AddHostedService<TimedHostedService>();
 
                     services.AddTransient<App>();
+                    services.AddSingleton<FlightEventValidationService>();
                 })
                 .UseConsoleLifetime()
                 .Build();

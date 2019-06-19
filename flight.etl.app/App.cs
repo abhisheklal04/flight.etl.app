@@ -8,29 +8,41 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using flight.etl.app.Common;
 using Microsoft.Extensions.Options;
+using flight.etl.app.Pipelines;
+using flight.etl.app.Services;
 
 namespace flight.etl.app
 {
     public class App
     {   
-        static long FileProcessingTimeStamp;
         static readonly Dictionary<EventType, JArray> EventsGroupedByType = new Dictionary<EventType, JArray>();
         FlightDataSettings _flightDataSettings;
+        FlightEventValidationService _flightEventValidationService;
 
-        public App(IOptions<FlightDataSettings> options)
+        public App(IOptions<FlightDataSettings> options, FlightEventValidationService flightEventValidationService)
         {
-            _flightDataSettings = options.Value;            
+            _flightDataSettings = options.Value;
+            _flightEventValidationService = flightEventValidationService;
         }
 
-        public void ProcessFlightEvents()
+        public void StartBatchProcess()
         {
             foreach (string currentFile in Directory.EnumerateFiles(Path.Combine(_flightDataSettings.BaseDirectory, _flightDataSettings.InputDirectory)))
             {
-                FileProcessingTimeStamp = DateTime.Now.Ticks;
+                var fileProcessingTimeStamp = DateTime.Now.Ticks;
 
+                Pipeline flightEtlPipeline = new Pipeline();
+
+                flightEtlPipeline.Add(new ExtractFileProcess(_flightDataSettings, currentFile));
+                //flightEtlPipeline.Add(new TransformEventsProcess(_flightEventValidationService));
+                //flightEtlPipeline.Add(new LoadEventsProcess(_flightDataSettings, fileProcessingTimeStamp));
+
+                flightEtlPipeline.Run();
+
+                /*
                 var fileName = Path.GetFileName(currentFile);
 
-                Directory.Move(currentFile, Path.Combine(_flightDataSettings.BaseDirectory, _flightDataSettings.RawDirectory+"/"+ fileName));
+                Directory.Move(currentFile, Path.Combine(_flightDataSettings.BaseDirectory, _flightDataSettings.RawDirectory + "/" + fileName));
 
                 string contents = File.ReadAllText(Path.Combine(_flightDataSettings.BaseDirectory, _flightDataSettings.RawDirectory + "/" + fileName));
 
@@ -41,9 +53,11 @@ namespace flight.etl.app
                     Debug.WriteLine(eventData.ToString());
                     ValidateEvent(eventData);
                 }
+                */
             }
         }
 
+        /*
         JArray ParseEventJsonData(string contents)
         {
             JArray eventsList = JArray.Parse(contents);
@@ -101,7 +115,6 @@ namespace flight.etl.app
         {
             // iterate events and save them their files.
         }
-
+        */
     }
-
 }
