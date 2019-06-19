@@ -12,22 +12,23 @@ namespace flight.etl.app.Pipelines
     public class TransformEventsProcess : IPipelineProcess
     {
         JArray _eventList;
-        Dictionary<EventType, JArray> _curatedEventsGroupedByType = new Dictionary<EventType, JArray>();
-        Dictionary<EventType, JArray> _exceptionEventsGroupedByType = new Dictionary<EventType, JArray>();
+        Dictionary<string, JArray> _curatedEventsGroupedByType = new Dictionary<string, JArray>();
+        Dictionary<string, JArray> _exceptionEventsGroupedByType = new Dictionary<string, JArray>();
 
         FlightEventValidationService _flightEventValidationService;
 
-        Tuple<Dictionary<EventType, JArray>, Dictionary<EventType, JArray>> _transformedEvents;
+        Tuple<Dictionary<string, JArray>, Dictionary<string, JArray>> _transformedEvents;
 
         public bool IsComplete { get; set; }
 
         public FlightDataSettings FlightDataSettings { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
         public long ProcessingTimeStamp { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-        TransformEventsProcess(FlightEventValidationService flightEventValidationService)
+        public TransformEventsProcess(FlightEventValidationService flightEventValidationService)
         {
             _flightEventValidationService = flightEventValidationService;
         }
+
         public void Connect(IPipelineProcess next)
         {
             next.SetInput(_transformedEvents);
@@ -58,33 +59,13 @@ namespace flight.etl.app.Pipelines
 
         void ValidateEvent(JObject eventData)
         {
-            var eventType = eventData["eventType"].ToString();
-            if (eventType == "Departure")
+            if (_flightEventValidationService.ValidateEvent(eventData))
             {
-                Debug.WriteLine("Departure data detected");
-                try
-                {
-                    if (ValidateDepartureFile(eventData))
-                    {
-
-                    }
-                }
-                catch (Exception e)
-                {
-                    // log error
-                }
+                AddToCuratedEventGroup(eventData);
             }
-            else if (eventType == "Arrival")
+            else
             {
-                Debug.WriteLine("Arrival data detected");
-                try
-                {
-                    ValidateArrivalFile(eventData);
-                }
-                catch (Exception e)
-                {
-                    // log error
-                }
+                AddToExceptionEventGroup(eventData);
             }
         }
 
@@ -100,27 +81,27 @@ namespace flight.etl.app.Pipelines
             return true;
         }
 
-        void AddToCuratedEventGroup(EventType eventType, JObject eventData)
+        void AddToCuratedEventGroup(JObject eventData)
         {
-            if (_curatedEventsGroupedByType.ContainsKey(eventType))
+            if (_curatedEventsGroupedByType.ContainsKey((string)eventData["eventType"]))
             {
-                _curatedEventsGroupedByType[eventType].Add(eventData);
+                _curatedEventsGroupedByType[(string)eventData["eventType"]].Add(eventData);
             }
             else
             {
-                _curatedEventsGroupedByType[eventType] = new JArray { eventData };
+                _curatedEventsGroupedByType[(string)eventData["eventType"]] = new JArray { eventData };
             }
         }
 
-        void AddToExceptionEventGroup(EventType eventType, JObject eventData)
+        void AddToExceptionEventGroup(JObject eventData)
         {
-            if (_exceptionEventsGroupedByType.ContainsKey(eventType))
+            if (_exceptionEventsGroupedByType.ContainsKey((string)eventData["eventType"]))
             {
-                _exceptionEventsGroupedByType[eventType].Add(eventData);
+                _exceptionEventsGroupedByType[(string)eventData["eventType"]].Add(eventData);
             }
             else
             {
-                _exceptionEventsGroupedByType[eventType] = new JArray { eventData };
+                _exceptionEventsGroupedByType[(string)eventData["eventType"]] = new JArray { eventData };
             }
         }
     }

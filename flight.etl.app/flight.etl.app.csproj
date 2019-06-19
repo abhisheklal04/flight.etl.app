@@ -27,6 +27,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Validators\ArrivalValidator.json" />
+    <None Remove="Validators\DepartureValidator.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Logs\" />
     <Folder Include="Helpers\" />
   </ItemGroup>

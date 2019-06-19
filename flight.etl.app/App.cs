@@ -34,7 +34,7 @@ namespace flight.etl.app
                 Pipeline flightEtlPipeline = new Pipeline();
 
                 flightEtlPipeline.Add(new ExtractFileProcess(_flightDataSettings, currentFile));
-                //flightEtlPipeline.Add(new TransformEventsProcess(_flightEventValidationService));
+                flightEtlPipeline.Add(new TransformEventsProcess(_flightEventValidationService));
                 //flightEtlPipeline.Add(new LoadEventsProcess(_flightDataSettings, fileProcessingTimeStamp));
 
                 flightEtlPipeline.Run();

@@ -1,31 +1,41 @@
 {
   "eventType": "Departure",
   "title": "Departure Event JSON Schema Validator",
-  "properties": {
-    "eventType": {
+  "properties": [
+    {
+      "name": "eventType",
       "type": "string",
       "validationRegex": "",
-      "errorMessage": "Invalid event type"
+      "errorMessage": "Invalid event type",
+      "isRequired": "true"
     },
-    "timeStamp": {
+    {
+      "name": "timeStamp",
       "type": "string",
       "validationRegex": "",
-      "errorMessage": "Invalid time stamp"
+      "errorMessage": "Invalid time stamp",
+      "isRequired": "true"
     },
-    "flight": {
+    {
+      "name": "flight",
       "type": "string",
       "validationRegex": "",
-      "errorMessage": "Invalid flight number"
+      "errorMessage": "Invalid flight number",
+      "isRequired": "true"
     },
-    "destination": {
+    {
+      "name": "destination",
       "type": "string",
       "validationRegex": "",
-      "errorMessage": "Invalid destination"
+      "errorMessage": "Invalid destination",
+      "isRequired": "true"
     },
-    "passengers": {
+    {
+      "name": "passengers",
       "type": "integer",
       "validationRegex": "",
-      "errorMessage": "Invalid passenger number"
+      "errorMessage": "Invalid passengers field",
+      "isRequired": "true"
     }
-  }
+  ]
 }
