@@ -11,11 +11,13 @@ using Microsoft.Extensions.Options;
 using flight.etl.app.Pipelines;
 using flight.etl.app.Services;
 using Microsoft.Extensions.Logging;
+using System.Threading;
+using System.Linq;
 
 namespace flight.etl.app
 {
     public class App
-    {   
+    {
         static readonly Dictionary<EventType, JArray> EventsGroupedByType = new Dictionary<EventType, JArray>();
         FlightDataSettings _flightDataSettings;
         FlightEventValidationService _flightEventValidationService;
@@ -30,33 +32,62 @@ namespace flight.etl.app
 
         public void StartBatchProcess()
         {
-            foreach (string currentFile in Directory.EnumerateFiles(Path.Combine(_flightDataSettings.BaseDirectory, _flightDataSettings.InputDirectory)))
+            var filesToProcess = Directory.EnumerateFiles(Path.Combine(_flightDataSettings.BaseDirectory, _flightDataSettings.InputDirectory));
+            List<Task> taskList = new List<Task>(); 
+            foreach (string currentFile in filesToProcess)
             {
                 try
                 {
-                    _logger.LogInformation("Batch Processing started of file :: " + currentFile);
+                    taskList.Add(Task.Factory.StartNew((object file) =>
+                    {
+                        List<string> pipelineSummary = new List<string>();
 
-                    var batchProcessTimer = Stopwatch.StartNew();
+                        try
+                        {
+                            var fileToProcess = (string)file;
 
-                    var fileProcessingTimeStamp = DateTime.Now.Ticks;
-                    List<string> pipelineSummary = new List<string>();
 
-                    Pipeline flightEtlPipeline = new Pipeline();
+                            pipelineSummary.Add("Batch Processing started of file :: " + fileToProcess);
 
-                    flightEtlPipeline.Add(new ExtractFileProcess(pipelineSummary, _flightDataSettings, currentFile, _logger));
-                    flightEtlPipeline.Add(new TransformEventsProcess(pipelineSummary, _flightEventValidationService, _logger));
-                    flightEtlPipeline.Add(new LoadEventsToFileProcess(pipelineSummary, _flightDataSettings, fileProcessingTimeStamp, _logger));
+                            var batchProcessTimer = Stopwatch.StartNew();
 
-                    flightEtlPipeline.Run();
+                            var fileProcessingTimeStamp = DateTime.Now.Ticks;
 
-                    batchProcessTimer.Stop();
+                            Pipeline flightEtlPipeline = new Pipeline();
 
-                    pipelineSummary.Add("Time in milliseconds to process batch " + batchProcessTimer.ElapsedMilliseconds);
+                            flightEtlPipeline.Add(new ExtractFileProcess(pipelineSummary, _flightDataSettings, fileToProcess, _logger));
+                            flightEtlPipeline.Add(new TransformEventsProcess(pipelineSummary, _flightEventValidationService, _logger));
+                            flightEtlPipeline.Add(new LoadEventsToFileProcess(pipelineSummary, _flightDataSettings, fileProcessingTimeStamp, _logger));
 
-                    _logger.LogInformation("Batch Processing Summary of file :: " + currentFile);
-                    _logger.LogInformation(string.Join(System.Environment.NewLine, pipelineSummary.ToArray()));
+                            pipelineSummary.Add("Batch Processing Summary of file :: " + fileToProcess);
 
-                    _logger.LogInformation("Batch Processing ended");
+                            flightEtlPipeline.Run();
+                            batchProcessTimer.Stop();
+
+                            pipelineSummary.Add("Time in milliseconds to process batch " + batchProcessTimer.ElapsedMilliseconds);
+
+                            pipelineSummary.Add("Batch Processing ended");
+                        }
+                        catch (Exception e)
+                        {
+                            pipelineSummary.Add("Error:: " + e.Message);
+                            pipelineSummary.Add("Error:: " + "Batch file processing terminated.");
+                        }
+
+                        _logger.LogInformation(string.Join(System.Environment.NewLine, pipelineSummary.ToArray()));
+                    }, currentFile));
+                    
+                   
+                    //flightEtlPipeline.Run();
+
+                    //batchProcessTimer.Stop();
+
+                    //pipelineSummary.Add("Time in milliseconds to process batch " + batchProcessTimer.ElapsedMilliseconds);
+
+                    //_logger.LogInformation("Batch Processing Summary of file :: " + currentFile);
+                    //_logger.LogInformation(string.Join(System.Environment.NewLine, pipelineSummary.ToArray()));
+
+                    //_logger.LogInformation("Batch Processing ended");
                 }
                 catch (Exception e)
                 {
@@ -64,6 +95,8 @@ namespace flight.etl.app
                     _logger.LogError("Batch file processing terminated.");
                 }
             }
+
+            Task.WaitAll(taskList.ToArray());
         }
     }
 }

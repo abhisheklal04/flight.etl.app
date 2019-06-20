@@ -49,12 +49,12 @@ namespace flight.etl.app.Pipelines
             {
                 SaveGroupedEventsToFiles();
                 IsComplete = true;
-                _logger.LogInformation("Events has been succesfully saved to respective curated and exception folders.");
+                _pipelineSummary.Add("Events has been succesfully saved to respective curated and exception folders.");
             }
             catch (Exception e)
             {
-                _logger.LogError(e.Message);
-                _logger.LogError("Failed to load events to respective curated and exception folder.");
+                _pipelineSummary.Add("Error: "+ e.Message);
+                _pipelineSummary.Add("Error: " + "Failed to load events to respective curated and exception folder.");
             }
         }
 
@@ -76,8 +76,8 @@ namespace flight.etl.app.Pipelines
                 }
                 catch (Exception e)
                 {
-                    _logger.LogError("Unable to write file " + eventFileName);
-                    _logger.LogError(e.Message);
+                    _pipelineSummary.Add("Error: " + "Unable to write file " + eventFileName);
+                    _pipelineSummary.Add("Error: " + e.Message);
                 }                
             }
 
@@ -92,8 +92,8 @@ namespace flight.etl.app.Pipelines
                 }
                 catch (Exception e)
                 {
-                    _logger.LogError("Unable to write file " + eventFileName);
-                    _logger.LogError(e.Message);
+                    _pipelineSummary.Add("Error: " + "Unable to write file " + eventFileName);
+                    _pipelineSummary.Add("Error: " + e.Message);
                 }
             }
         }

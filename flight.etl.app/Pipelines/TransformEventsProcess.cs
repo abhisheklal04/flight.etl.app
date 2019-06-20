@@ -50,7 +50,7 @@ namespace flight.etl.app.Pipelines
         {
             _eventList = (JArray)_input;
 
-            _logger.LogInformation("Validating and transforming event list");
+            _pipelineSummary.Add("Validating and transforming event list");
 
             int eventDataItemIndex = 0;
             foreach (JObject eventData in _eventList.Children<JObject>())
@@ -71,11 +71,11 @@ namespace flight.etl.app.Pipelines
 
                     var validationResult = _flightEventValidationService.ValidateEvent(eventData);
 
-                    if (validationResult == EventValidationResult.ValidationSuccess)
+                    if (validationResult.EventValidationResult == EventValidationResultType.ValidationSuccess)
                     {
                         AddToCuratedEventGroup(eventData, incomingEventType);
                     }
-                    else if (validationResult == EventValidationResult.ValidationFailed)
+                    else if (validationResult.EventValidationResult == EventValidationResultType.ValidationFailed)
                     {
                         AddToExceptionEventGroup(eventData, incomingEventType);
                     }
@@ -85,8 +85,13 @@ namespace flight.etl.app.Pipelines
                     }
 
                     // logging number of failed events
-                    if (validationResult != EventValidationResult.ValidationSuccess)
+                    if (validationResult.EventValidationResult != EventValidationResultType.ValidationSuccess)
                     {
+                        if (validationResult.ErrorMessages != null)
+                        {
+                            _pipelineSummary.Add("Error: " + validationResult.ErrorMessages);
+                        }
+
                         if (eventData.ContainsKey(Constants.EventData_Field_EventType) && eventData.ContainsKey(Constants.EventData_Field_Flight))
                         {
                             _failedEventsIds.Add("event at index : " + eventDataItemIndex.ToString() + " id: " + eventData[Constants.EventData_Field_EventType].ToString() + eventData[Constants.EventData_Field_Flight].ToString());
@@ -99,7 +104,7 @@ namespace flight.etl.app.Pipelines
                 }
                 catch (Exception e)
                 {
-                    _logger.LogError(e.Message);
+                    _pipelineSummary.Add("Error: " + e.Message);
                 }
             }
 

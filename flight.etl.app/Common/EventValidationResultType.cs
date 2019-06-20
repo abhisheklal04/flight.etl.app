@@ -4,7 +4,7 @@ using System.Text;
 
 namespace flight.etl.app.Common
 {
-    public enum EventValidationResult
+    public enum EventValidationResultType
     {
         ValidationSuccess,
         ValidationFailed,

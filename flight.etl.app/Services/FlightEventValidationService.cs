@@ -45,8 +45,9 @@ namespace flight.etl.app.Services
             }
         }
 
-        public EventValidationResult ValidateEvent(JObject eventData)
-        {            
+        public ValidationResult ValidateEvent(JObject eventData)
+        {
+            var validationResult = new ValidationResult();
             try
             {
                 var eventType = eventData[Constants.EventData_Field_EventType].ToString();
@@ -85,19 +86,21 @@ namespace flight.etl.app.Services
                 {
                     throw new ValidationErrorException(String.Join(System.Environment.NewLine, validationErrors.ToArray()));
                 }
+
+                validationResult.EventValidationResult = EventValidationResultType.ValidationSuccess;
             }
             catch (EventTypeMissingException e)
             {
-                _logger.LogError(e.Message + " :: for event data " + eventData.ToString());
-                return EventValidationResult.UnknownEventFound;
+                validationResult.ErrorMessages = e.Message + " :: for event data " + eventData.ToString();
+                validationResult.EventValidationResult = EventValidationResultType.UnknownEventFound;
             }
             catch (Exception e)
             {
-                _logger.LogError(e.Message + " :: for event data " + eventData.ToString());
-                return EventValidationResult.ValidationFailed;
+                validationResult.ErrorMessages = e.Message + " :: for event data " + eventData.ToString();
+                validationResult.EventValidationResult = EventValidationResultType.ValidationFailed;
             }
                         
-            return EventValidationResult.ValidationSuccess;
+            return validationResult;
         }
 
         public bool ValidateEventPropertyByRegex(string regex, string eventPropertyValue)
