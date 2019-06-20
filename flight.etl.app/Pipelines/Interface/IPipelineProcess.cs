@@ -8,7 +8,7 @@ namespace flight.etl.app.Pipelines.Interface
 {
     public interface IPipelineProcess
     {        
-        void SetInput<T>(T input);
+        void SetInput(object input);
         
         void Connect(IPipelineProcess next);
 
@@ -19,10 +19,6 @@ namespace flight.etl.app.Pipelines.Interface
             get;
         }
 
-        FlightDataSettings FlightDataSettings { get; set; }
-
-        long ProcessingTimeStamp { get; set; }
-
-        List<string> PipelineSummary { get; set; }
+        List<string> _pipelineSummary { get; set; }
     }
 }

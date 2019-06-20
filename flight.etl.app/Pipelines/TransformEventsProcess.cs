@@ -1,6 +1,7 @@
 ﻿using flight.etl.app.Common;
 using flight.etl.app.Pipelines.Interface;
 using flight.etl.app.Services;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -12,10 +13,9 @@ namespace flight.etl.app.Pipelines
     public class TransformEventsProcess : IPipelineProcess
     {
         public bool IsComplete { get; set; }
-        public FlightDataSettings FlightDataSettings { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public long ProcessingTimeStamp { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public List<string> PipelineSummary { get; set; }
+        public List<string> _pipelineSummary { get; set; }
 
+        object _input;
         JArray _eventList;
         Dictionary<string, JArray> _curatedEventsGroupedByType;
         Dictionary<string, JArray> _exceptionEventsGroupedByType;
@@ -25,13 +25,20 @@ namespace flight.etl.app.Pipelines
 
         List<string> _failedEventsIds = new List<string>();
 
-        public TransformEventsProcess(List<string> pipelineSummary, FlightEventValidationService flightEventValidationService)
+        ILogger _logger;
+        public TransformEventsProcess(List<string> pipelineSummary, FlightEventValidationService flightEventValidationService, ILogger logger)
         {
-            PipelineSummary = pipelineSummary;
+            _logger = logger;
+            _pipelineSummary = pipelineSummary;
             _flightEventValidationService = flightEventValidationService;
             _curatedEventsGroupedByType = new Dictionary<string, JArray>();
             _exceptionEventsGroupedByType = new Dictionary<string, JArray>();
             _transformedEvents = new Tuple<Dictionary<string, JArray>, Dictionary<string, JArray>>(_curatedEventsGroupedByType, _exceptionEventsGroupedByType);
+        }
+
+        public void SetInput(object input)
+        {
+            _input = input;
         }
 
         public void Connect(IPipelineProcess next)
@@ -41,14 +48,16 @@ namespace flight.etl.app.Pipelines
 
         public void Process()
         {
+            _eventList = (JArray)_input;
+
+            _logger.LogInformation("Validating and transforming event list");
+
             int eventDataItemIndex = 0;
             foreach (JObject eventData in _eventList.Children<JObject>())
             {
                 eventDataItemIndex++;
                 try
                 {
-                    Debug.WriteLine(eventData.ToString());
-
                     var incomingEventType = (string)eventData[Constants.EventData_Field_EventType];
 
                     if (_distinctEventTypesFound.ContainsKey(incomingEventType))
@@ -90,24 +99,32 @@ namespace flight.etl.app.Pipelines
                 }
                 catch (Exception e)
                 {
-                    Debug.WriteLine(e.Message);
+                    _logger.LogError(e.Message);
                 }
             }
 
             IsComplete = true;
 
-            PipelineSummary.Add("Number of distinct event types found in batch file: " + _distinctEventTypesFound.Keys.Count);
+            _pipelineSummary.Add("Number of distinct event types found in batch file: " + _distinctEventTypesFound.Keys.Count);
             foreach (var eventType in _distinctEventTypesFound)
             {
-                PipelineSummary.Add("No. of event for " + eventType.Key + "::" + eventType.Value);
+                _pipelineSummary.Add("No. of event for " + eventType.Key + "::" + eventType.Value);
             }
 
-            PipelineSummary.Add("Number of failed Validation events :: " + _failedEventsIds.Count + " \n  Events Failed :: \n " + string.Join("\n", _failedEventsIds.ToArray()));
-        }
+            if (_failedEventsIds.Count > 0)
+            {
+                _pipelineSummary.Add(
+                    "Number of failed Validation events :: " +
+                    _failedEventsIds.Count + System.Environment.NewLine +
+                    "Events Failed :: " + System.Environment.NewLine +
+                    string.Join(System.Environment.NewLine, _failedEventsIds.ToArray())
+                );
+            }
+            else
+            {
+                _pipelineSummary.Add("All events succesfully passed validation.");
+            }
 
-        public void SetInput<T>(T eventJsonArray)
-        {
-            _eventList = (JArray)(object)eventJsonArray;
         }
 
         void AddToCuratedEventGroup(JObject eventData, string eventType)

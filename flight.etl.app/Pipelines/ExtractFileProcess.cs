@@ -1,5 +1,6 @@
 ﻿using flight.etl.app.Common;
 using flight.etl.app.Pipelines.Interface;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -17,15 +18,18 @@ namespace flight.etl.app.Pipelines
 
         public bool IsComplete { get; private set; }
 
-        public FlightDataSettings FlightDataSettings { get; set; }
-        public long ProcessingTimeStamp { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public List<string> PipelineSummary { get; set; }
+        public FlightDataSettings _flightDataSettings { get; set; }
+        public List<string> _pipelineSummary { get; set; }
 
-        public ExtractFileProcess(List<string> pipelineSummary, FlightDataSettings flightDataSettings, string filePath)
+        ILogger _logger;
+
+        public ExtractFileProcess(List<string> pipelineSummary, FlightDataSettings flightDataSettings, string filePath, ILogger logger)
         {
-            PipelineSummary = PipelineSummary;
+            _logger = logger;
 
-            FlightDataSettings = flightDataSettings ?? throw new Exception("Flight Data directory Settings has not been set");
+            _pipelineSummary = pipelineSummary;
+
+            _flightDataSettings = flightDataSettings ?? throw new Exception("Flight Data directory Settings has not been set");
 
             if (filePath == null)
             {
@@ -33,6 +37,11 @@ namespace flight.etl.app.Pipelines
             }
 
             SetInput(filePath);            
+        }
+
+        public void SetInput(object filePath)
+        {
+            _filePath = (string)filePath;
         }
 
         public void Connect(IPipelineProcess next)
@@ -46,24 +55,20 @@ namespace flight.etl.app.Pipelines
             {                
                 var fileName = Path.GetFileName(_filePath);
 
-                var movedFilePath = Path.Combine(FlightDataSettings.BaseDirectory, FlightDataSettings.RawDirectory + "/" + fileName);
-                Directory.Move(_filePath, movedFilePath);
-
-                string contents = File.ReadAllText(movedFilePath);
+                string contents = File.ReadAllText(_filePath);
 
                 _eventList = ParseEventJsonData(contents);
+
+                //var movedFilePath = Path.Combine(FlightDataSettings.BaseDirectory, FlightDataSettings.RawDirectory + "/" + fileName);
+                //Directory.Move(_filePath, movedFilePath);
+
                 IsComplete = true;
-                PipelineSummary.Add("Number of event found in batch file: " + fileName);
+                _pipelineSummary.Add("Total Number of events found in batch file: " + _eventList.Count);
             }
             catch (Exception e)
             {
-                Debug.WriteLine(e.Message);
+                _logger.LogError(e.Message);
             }            
-        }
-
-        public void SetInput<T>(T filePath)
-        {
-            _filePath = (string)(object)filePath;
         }
 
         JArray ParseEventJsonData(string contents)

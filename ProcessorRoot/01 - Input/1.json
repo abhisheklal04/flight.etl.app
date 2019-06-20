@@ -8,7 +8,7 @@
     },
     {
         "eventType": "Departure",
-        "timeStamp": "2017-11-27 09:43:56Z",
+        "timeStamp": "2017-11-27T09:43:56Z",
         "flight" : "QA123",
         "destination": "Brisbane",
         "passengers" : "177"
@@ -16,7 +16,7 @@
     {
         "eventType": "Arrival",
         "timeStamp": "2017-07-03 15:09:44Z",
-        "flight" : "AAV732",
+        "flight" : "AAV73256",
         "delayed" : "24:10",
         "passengers" : "248"
     },
@@ -24,7 +24,7 @@
         "eventType": "Arrival",
         "timeStamp": "2018-07-04 01:00:00Z",
         "flight" : "AAV253",
-        "delayed" : "03:01",
+        "delayed" : "03:019",
         "passengers" : "177"
     }
 

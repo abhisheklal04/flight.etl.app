@@ -34,7 +34,7 @@ namespace flight.etl.app
                 {
                     logging.AddConfiguration(hostContext.Configuration.GetSection("Logging"));
                     logging.AddConsole();
-                    logging.AddDebug();
+                    logging.AddDebug();                    
                 })
                 .ConfigureServices((hostContext, services) =>
                 {

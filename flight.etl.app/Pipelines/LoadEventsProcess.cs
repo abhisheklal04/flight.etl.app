@@ -1,5 +1,6 @@
 ﻿using flight.etl.app.Common;
 using flight.etl.app.Pipelines.Interface;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -16,15 +17,25 @@ namespace flight.etl.app.Pipelines
 
         public bool IsComplete { get; private set; }
 
-        public FlightDataSettings FlightDataSettings { get; set; }
-        public long ProcessingTimeStamp { get; set; }
-        public List<string> PipelineSummary { get; set; }
+        public FlightDataSettings _flightDataSettings { get; set; }
+        public long _processingTimeStamp { get; set; }
+        public List<string> _pipelineSummary { get; set; }
 
-        public LoadEventsToFileProcess(List<string> pipelineSummary, FlightDataSettings flightDataSettings, long processingTimeStamp)
+        object _input;
+
+        ILogger _logger;
+
+        public LoadEventsToFileProcess(List<string> pipelineSummary, FlightDataSettings flightDataSettings, long processingTimeStamp, ILogger logger)
         {
-            ProcessingTimeStamp = processingTimeStamp != 0 ? processingTimeStamp : throw new Exception("Processing timestamp has not been set");
-            FlightDataSettings = flightDataSettings ?? throw new Exception("Flight Data directory Settings has not been set");
-            PipelineSummary = pipelineSummary;
+            _logger = logger;
+            _processingTimeStamp = processingTimeStamp != 0 ? processingTimeStamp : throw new Exception("Processing timestamp has not been set");
+            _flightDataSettings = flightDataSettings ?? throw new Exception("Flight Data directory Settings has not been set");
+            _pipelineSummary = pipelineSummary;
+        }
+
+        public void SetInput(object input)
+        {
+            _input = input;
         }
 
         public void Connect(IPipelineProcess next)
@@ -38,54 +49,51 @@ namespace flight.etl.app.Pipelines
             {
                 SaveGroupedEventsToFiles();
                 IsComplete = true;
-                Debug.WriteLine("Events has been succesfully saved to respective curated and exception folders.");
+                _logger.LogInformation("Events has been succesfully saved to respective curated and exception folders.");
             }
             catch (Exception e)
             {
-                Debug.WriteLine(e.Message);
-                Debug.WriteLine("Failed to load events to respective curated and exception folder.");
+                _logger.LogError(e.Message);
+                _logger.LogError("Failed to load events to respective curated and exception folder.");
             }
-        }
-
-        public void SetInput<T>(T transformedEvents)
-        {
-            var _transformedEvents = (Tuple<Dictionary<string, JArray>, Dictionary<string, JArray>>)(object)transformedEvents;
-            _curatedEventsGroupedByType = _transformedEvents.Item1;
-            _exceptionEventsGroupedByType = _transformedEvents.Item2;
         }
 
         void SaveGroupedEventsToFiles()
         {
+            var _transformedEvents = (Tuple<Dictionary<string, JArray>, Dictionary<string, JArray>>)_input;
+
+            _curatedEventsGroupedByType = _transformedEvents.Item1;
+            _exceptionEventsGroupedByType = _transformedEvents.Item2;
             // writing curated event file
             foreach (var eventType in _curatedEventsGroupedByType.Keys)
             {
-                var eventFileName = eventType + "-" + ProcessingTimeStamp + ".json";
+                var eventFileName = eventType + "-" + _processingTimeStamp + ".json";
 
                 try
                 {
-                    var eventFilePath = Path.Combine(FlightDataSettings.BaseDirectory, FlightDataSettings.CuratedDirectory + "/" + eventType + "/" + eventFileName);
+                    var eventFilePath = Path.Combine(_flightDataSettings.BaseDirectory, _flightDataSettings.CuratedDirectory + "/" + eventType + "/" + eventFileName);
                     File.WriteAllText(eventFilePath, _curatedEventsGroupedByType[eventType].ToString());                    
                 }
                 catch (Exception e)
                 {
-                    Debug.WriteLine("Unable to write file " + eventFileName);
-                    Debug.WriteLine(e.Message);
+                    _logger.LogError("Unable to write file " + eventFileName);
+                    _logger.LogError(e.Message);
                 }                
             }
 
             // writing exception event file
-            foreach (var eventType in _curatedEventsGroupedByType.Keys)
+            foreach (var eventType in _exceptionEventsGroupedByType.Keys)
             {
-                var eventFileName = eventType + "-" + ProcessingTimeStamp + ".json";
+                var eventFileName = eventType + "-" + _processingTimeStamp + ".json";
                 try
                 {                   
-                    var eventFilePath = Path.Combine(FlightDataSettings.BaseDirectory, FlightDataSettings.ExceptionDirectory + "/" + eventType + "/" + eventFileName);
+                    var eventFilePath = Path.Combine(_flightDataSettings.BaseDirectory, _flightDataSettings.ExceptionDirectory + "/" + eventType + "/" + eventFileName);
                     File.WriteAllText(eventFilePath, _exceptionEventsGroupedByType[eventType].ToString());
                 }
                 catch (Exception e)
                 {
-                    Debug.WriteLine("Unable to write file " + eventFileName);
-                    Debug.WriteLine(e.Message);
+                    _logger.LogError("Unable to write file " + eventFileName);
+                    _logger.LogError(e.Message);
                 }
             }
         }

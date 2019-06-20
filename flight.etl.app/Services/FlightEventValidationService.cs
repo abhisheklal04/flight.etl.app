@@ -8,6 +8,7 @@ using System.IO;
 using System.Text;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
 
 namespace flight.etl.app.Services
 {
@@ -15,9 +16,11 @@ namespace flight.etl.app.Services
     {
         FlightDataSettings _flightDataSettings;
         Dictionary<string, JObject> _validators = new Dictionary<string, JObject>();
+        ILogger _logger;
 
-        public FlightEventValidationService(IOptions<FlightDataSettings> options)
+        public FlightEventValidationService(IOptions<FlightDataSettings> options, ILogger<FlightEventValidationService> logger)
         {
+            _logger = logger;
             _flightDataSettings = options.Value;
 
             try
@@ -32,12 +35,12 @@ namespace flight.etl.app.Services
 
                     _validators.Add((string)validationSchema[Constants.EventData_Field_EventType], validationSchema);
 
-                    Debug.WriteLine((string)validationSchema[Constants.EventData_Field_EventType] + " validation schema is registered ");
+                    _logger.LogInformation((string)validationSchema[Constants.EventData_Field_EventType] + " validation schema is registered ");
                 }
             }
             catch (Exception e)
             {
-                Debug.WriteLine(e.Message);
+                _logger.LogError(e.Message);
                 throw new FileLoadException("Unable to load validators");
             }
         }
@@ -65,7 +68,7 @@ namespace flight.etl.app.Services
                 var validationErrors = new List<string>();
                 foreach (JObject validationProperty in validationProperties)
                 {
-                    var eventPropertyValue = eventData[validationProperty[Constants.Validation_schema_Field_Properties_Name]].ToString();
+                    var eventPropertyValue = eventData[validationProperty[Constants.Validation_schema_Field_Properties_Name].ToString()].ToString();
 
                     if (string.IsNullOrEmpty(eventPropertyValue) && validationProperty[Constants.Validation_schema_Field_Properties_IsRequired].ToString() == "true")
                     {
@@ -80,19 +83,17 @@ namespace flight.etl.app.Services
 
                 if (validationErrors.Any())
                 {
-                    throw new ValidationErrorException(String.Join("\n", validationErrors.ToArray()));
+                    throw new ValidationErrorException(String.Join(System.Environment.NewLine, validationErrors.ToArray()));
                 }
             }
             catch (EventTypeMissingException e)
             {
-                Debug.WriteLine("Invalid event data " + eventData.ToString());
-                Debug.WriteLine(e.Message);
+                _logger.LogError(e.Message + " :: for event data " + eventData.ToString());
                 return EventValidationResult.UnknownEventFound;
             }
             catch (Exception e)
             {
-                Debug.WriteLine("Invalid event data " + eventData.ToString());
-                Debug.WriteLine(e.Message);
+                _logger.LogError(e.Message + " :: for event data " + eventData.ToString());
                 return EventValidationResult.ValidationFailed;
             }
                         

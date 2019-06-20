@@ -1,0 +1,9 @@
+[
+  {
+    "eventType": "Departure",
+    "timeStamp": "2017-11-27T09:43:56Z",
+    "flight": "QA123",
+    "destination": "Brisbane",
+    "passengers": "177"
+  }
+]
