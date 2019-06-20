@@ -33,6 +33,16 @@ namespace flight.etl.app
         public void StartBatchProcess()
         {
             var filesToProcess = Directory.EnumerateFiles(Path.Combine(_flightDataSettings.BaseDirectory, _flightDataSettings.InputDirectory));
+
+            if (filesToProcess.Count() > 0)
+            {
+                _flightEventValidationService.LoadJsonValidators();
+            }
+            else
+            {                
+                return;
+            }
+
             List<Task> taskList = new List<Task>(); 
             foreach (string currentFile in filesToProcess)
             {
@@ -45,7 +55,6 @@ namespace flight.etl.app
                         try
                         {
                             var fileToProcess = (string)file;
-
 
                             pipelineSummary.Add("Batch Processing started of file :: " + fileToProcess);
 
@@ -75,19 +84,7 @@ namespace flight.etl.app
                         }
 
                         _logger.LogInformation(string.Join(System.Environment.NewLine, pipelineSummary.ToArray()));
-                    }, currentFile));
-                    
-                   
-                    //flightEtlPipeline.Run();
-
-                    //batchProcessTimer.Stop();
-
-                    //pipelineSummary.Add("Time in milliseconds to process batch " + batchProcessTimer.ElapsedMilliseconds);
-
-                    //_logger.LogInformation("Batch Processing Summary of file :: " + currentFile);
-                    //_logger.LogInformation(string.Join(System.Environment.NewLine, pipelineSummary.ToArray()));
-
-                    //_logger.LogInformation("Batch Processing ended");
+                    }, currentFile));                    
                 }
                 catch (Exception e)
                 {

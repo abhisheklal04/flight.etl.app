@@ -15,18 +15,22 @@ namespace flight.etl.app.Services
     public class FlightEventValidationService
     {
         FlightDataSettings _flightDataSettings;
-        Dictionary<string, JObject> _validators = new Dictionary<string, JObject>();
+        Dictionary<string, JObject> _validators;
         ILogger _logger;
 
         public FlightEventValidationService(IOptions<FlightDataSettings> options, ILogger<FlightEventValidationService> logger)
         {
             _logger = logger;
             _flightDataSettings = options.Value;
+        }
 
+        public void LoadJsonValidators()
+        {
             try
             {
+                _validators = new Dictionary<string, JObject>();
+
                 var validatorDirectory = _flightDataSettings.ValidatorsDirectory;
-                var baseDirectoryPath = AppDomain.CurrentDomain.BaseDirectory;
 
                 foreach (string validatorJsonFile in Directory.EnumerateFiles(validatorDirectory))
                 {

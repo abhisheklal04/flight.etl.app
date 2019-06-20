@@ -13,7 +13,7 @@ namespace flight.etl.app.Pipelines
 {
     public class ExtractFileProcess : IPipelineProcess
     {
-        string _filePath;
+        string _fileToExtractEventData;
         JArray _eventList;
 
         public bool IsComplete { get; private set; }
@@ -23,7 +23,7 @@ namespace flight.etl.app.Pipelines
 
         ILogger _logger;
 
-        public ExtractFileProcess(List<string> pipelineSummary, FlightDataSettings flightDataSettings, string filePath, ILogger logger)
+        public ExtractFileProcess(List<string> pipelineSummary, FlightDataSettings flightDataSettings, string fileToExtractEventData, ILogger logger)
         {
             _logger = logger;
 
@@ -31,17 +31,17 @@ namespace flight.etl.app.Pipelines
 
             _flightDataSettings = flightDataSettings ?? throw new Exception("Flight Data directory Settings has not been set");
 
-            if (filePath == null)
+            if (fileToExtractEventData == null)
             {
                 throw new Exception("no file available to start extract process");
             }
 
-            SetInput(filePath);            
+            SetInput(fileToExtractEventData);            
         }
 
-        public void SetInput(object filePath)
+        public void SetInput(object fileToExtractEventData)
         {
-            _filePath = (string)filePath;
+            _fileToExtractEventData = (string)fileToExtractEventData;
         }
 
         public void Connect(IPipelineProcess next)
@@ -53,13 +53,15 @@ namespace flight.etl.app.Pipelines
         {
             try
             {                
-                var fileName = Path.GetFileName(_filePath);
+                var fileName = Path.GetFileName(_fileToExtractEventData);
 
                 //string contents = File.ReadAllText(_filePath);
 
                 var movedToRawDirectory = Path.Combine(_flightDataSettings.BaseDirectory, _flightDataSettings.RawDirectory);
                 Directory.CreateDirectory(movedToRawDirectory);
-                Directory.Move(_filePath, movedToRawDirectory + "/" + fileName);
+
+                File.Copy(_fileToExtractEventData, movedToRawDirectory + "/" + fileName, true);
+                File.Delete(_fileToExtractEventData);
 
                 _pipelineSummary.Add("Batch file '" + fileName + "' moved to RAW directory");
 
