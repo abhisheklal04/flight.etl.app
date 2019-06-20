@@ -60,6 +60,11 @@ namespace flight.etl.app.Pipelines
                 var movedToRawDirectory = Path.Combine(_flightDataSettings.BaseDirectory, _flightDataSettings.RawDirectory);
                 Directory.CreateDirectory(movedToRawDirectory);
                 Directory.Move(_filePath, movedToRawDirectory + "/" + fileName);
+
+                _pipelineSummary.Add("Batch file '" + fileName + "' moved to RAW directory");
+
+                _pipelineSummary.Add("Reading batch file");
+
                 string contents = File.ReadAllText(movedToRawDirectory + "/" + fileName);
 
                 try

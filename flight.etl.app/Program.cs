@@ -43,13 +43,13 @@ namespace flight.etl.app
                     var flightData = hostContext.Configuration.GetSection("FlightData");
                     services.Configure<FlightDataSettings>(flightData);
 
-                    // add services                                       
+                    // add services                                      
                     
-                    services.AddHostedService<LifetimeEventsHostedService>();
-                    //services.AddHostedService<TimedHostedService>();
+                    //services.AddHostedService<LifetimeEventsHostedService>();
+                    services.AddHostedService<TimedHostedService>();
 
                     services.AddTransient<App>();
-                    services.AddSingleton<FlightEventValidationService>();
+                    services.AddTransient<FlightEventValidationService>();
                 })
                 .UseConsoleLifetime()
                 .Build();

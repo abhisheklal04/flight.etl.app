@@ -10,25 +10,33 @@ namespace flight.etl.app
     {
         private readonly ILogger _logger;
         private Timer _timer;
+        private App _app;
 
-        public TimedHostedService(ILogger<TimedHostedService> logger)
+        public TimedHostedService(ILogger<TimedHostedService> logger, App app)
         {            
             _logger = logger;
+            _app = app;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Timed Background Service is starting.");
 
-            _timer = new Timer(DoWork, null, TimeSpan.Zero,
-                TimeSpan.FromSeconds(5));
+            //_timer = new Timer(DoWork, null, TimeSpan.Zero,
+            //    TimeSpan.FromSeconds(5));
+
+            _timer = new Timer((g) =>
+            {
+                DoWork();
+                _timer.Change(5000, Timeout.Infinite);
+            }, null, 0, Timeout.Infinite);
 
             return Task.CompletedTask;
         }
 
-        private void DoWork(object state)
-        {
-            _logger.LogInformation("Timed Background Service is working. " + DateTime.Now.Ticks);
+        private void DoWork()
+        {   
+            _app.StartBatchProcess();            
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
