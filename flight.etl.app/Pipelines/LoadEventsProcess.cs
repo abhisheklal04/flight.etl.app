@@ -71,7 +71,10 @@ namespace flight.etl.app.Pipelines
 
                 try
                 {
-                    var eventFilePath = Path.Combine(_flightDataSettings.BaseDirectory, _flightDataSettings.CuratedDirectory + "/" + eventType + "/" + eventFileName);
+                    var curatedEventDirectoryPath = Path.Combine(_flightDataSettings.BaseDirectory, _flightDataSettings.CuratedDirectory + "/" + eventType);
+                    Directory.CreateDirectory(curatedEventDirectoryPath);
+                    var eventFilePath = Path.Combine(curatedEventDirectoryPath, eventFileName);
+
                     File.WriteAllText(eventFilePath, _curatedEventsGroupedByType[eventType].ToString());                    
                 }
                 catch (Exception e)
@@ -86,8 +89,11 @@ namespace flight.etl.app.Pipelines
             {
                 var eventFileName = eventType + "-" + _processingTimeStamp + ".json";
                 try
-                {                   
-                    var eventFilePath = Path.Combine(_flightDataSettings.BaseDirectory, _flightDataSettings.ExceptionDirectory + "/" + eventType + "/" + eventFileName);
+                {
+                    var exceptionEventDirectoryPath = Path.Combine(_flightDataSettings.BaseDirectory, _flightDataSettings.ExceptionDirectory + "/" + eventType);
+                    Directory.CreateDirectory(exceptionEventDirectoryPath);
+                    var eventFilePath = Path.Combine(exceptionEventDirectoryPath ,eventFileName);
+
                     File.WriteAllText(eventFilePath, _exceptionEventsGroupedByType[eventType].ToString());
                 }
                 catch (Exception e)

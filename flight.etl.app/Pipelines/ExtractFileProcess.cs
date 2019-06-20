@@ -55,12 +55,12 @@ namespace flight.etl.app.Pipelines
             {                
                 var fileName = Path.GetFileName(_filePath);
 
-                string contents = File.ReadAllText(_filePath);
+                //string contents = File.ReadAllText(_filePath);
 
-                //var movedToRawDirectory = Path.Combine(_flightDataSettings.BaseDirectory, _flightDataSettings.RawDirectory);
-                //Directory.CreateDirectory(movedToRawDirectory);
-                //Directory.Move(_filePath, movedToRawDirectory + "/" + fileName);
-                //string contents = File.ReadAllText(movedToRawDirectory + "/" + fileName);
+                var movedToRawDirectory = Path.Combine(_flightDataSettings.BaseDirectory, _flightDataSettings.RawDirectory);
+                Directory.CreateDirectory(movedToRawDirectory);
+                Directory.Move(_filePath, movedToRawDirectory + "/" + fileName);
+                string contents = File.ReadAllText(movedToRawDirectory + "/" + fileName);
 
                 try
                 {
