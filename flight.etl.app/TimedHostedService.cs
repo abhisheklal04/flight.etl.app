@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -11,11 +12,14 @@ namespace flight.etl.app
         private readonly ILogger _logger;
         private Timer _timer;
         private App _app;
+        private IConfiguration _configuration;
 
-        public TimedHostedService(ILogger<TimedHostedService> logger, App app)
+
+        public TimedHostedService(ILogger<TimedHostedService> logger, App app, IConfiguration configuration)
         {            
             _logger = logger;
             _app = app;
+            _configuration = configuration;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -28,7 +32,8 @@ namespace flight.etl.app
             _timer = new Timer((g) =>
             {
                 DoWork();
-                _timer.Change(5000, Timeout.Infinite);
+                var serviceRestartIntervalInSeconds = Convert.ToInt32(_configuration.GetSection("HostedService:BatchProcessingInvervalInSeconds").Value);
+                _timer.Change(serviceRestartIntervalInSeconds * 1000, Timeout.Infinite);
             }, null, 0, Timeout.Infinite);
 
             return Task.CompletedTask;
