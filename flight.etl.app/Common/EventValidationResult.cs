@@ -4,10 +4,10 @@ using System.Text;
 
 namespace flight.etl.app.Common
 {
-    public enum EventType
+    public enum EventValidationResult
     {
-        Departure,
-        Arrival,
-        Unknown
+        ValidationSuccess,
+        ValidationFailed,
+        UnknownEventFound
     }
 }

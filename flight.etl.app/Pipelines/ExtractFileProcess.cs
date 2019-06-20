@@ -19,11 +19,20 @@ namespace flight.etl.app.Pipelines
 
         public FlightDataSettings FlightDataSettings { get; set; }
         public long ProcessingTimeStamp { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public List<string> PipelineSummary { get; set; }
 
-        public ExtractFileProcess(FlightDataSettings flightDataSettings, string filePath)
+        public ExtractFileProcess(List<string> pipelineSummary, FlightDataSettings flightDataSettings, string filePath)
         {
-            FlightDataSettings = FlightDataSettings;
-            SetInput(filePath);
+            PipelineSummary = PipelineSummary;
+
+            FlightDataSettings = flightDataSettings ?? throw new Exception("Flight Data directory Settings has not been set");
+
+            if (filePath == null)
+            {
+                throw new Exception("no file available to to start extract process");
+            }
+
+            SetInput(filePath);            
         }
 
         public void Connect(IPipelineProcess next)
@@ -34,7 +43,7 @@ namespace flight.etl.app.Pipelines
         public void Process()
         {
             try
-            {
+            {                
                 var fileName = Path.GetFileName(_filePath);
 
                 var movedFilePath = Path.Combine(FlightDataSettings.BaseDirectory, FlightDataSettings.RawDirectory + "/" + fileName);
@@ -44,6 +53,7 @@ namespace flight.etl.app.Pipelines
 
                 _eventList = ParseEventJsonData(contents);
                 IsComplete = true;
+                PipelineSummary.Add("Number of event found in batch file: " + fileName);
             }
             catch (Exception e)
             {

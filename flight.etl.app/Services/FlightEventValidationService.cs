@@ -42,11 +42,15 @@ namespace flight.etl.app.Services
             }
         }
 
-        public bool ValidateEvent(JObject eventData)
-        {
+        public EventValidationResult ValidateEvent(JObject eventData)
+        {            
             try
             {
                 var eventType = eventData[Constants.EventData_Field_EventType].ToString();
+                if (!_validators.ContainsKey(eventType))
+                {
+                    throw new EventTypeMissingException("Unknown event type found");
+                }
                 var validatorForEventType = _validators[eventType];
 
                 JArray validationProperties = (JArray)validatorForEventType[Constants.Validation_schema_Field_Properties];
@@ -63,10 +67,15 @@ namespace flight.etl.app.Services
                 {
                     var eventPropertyValue = eventData[validationProperty[Constants.Validation_schema_Field_Properties_Name]].ToString();
 
-                    if (ValidateEventPropertyByRegex(validationProperty[Constants.Validation_schema_Field_Properties_ValidationRegex].ToString(), eventPropertyValue))
+                    if (string.IsNullOrEmpty(eventPropertyValue) && validationProperty[Constants.Validation_schema_Field_Properties_IsRequired].ToString() == "true")
                     {
                         validationErrors.Add(validationProperty[Constants.Validation_schema_Field_Properties_ErrorMessage].ToString());
-                    }                    
+                    }
+
+                    if (!ValidateEventPropertyByRegex(validationProperty[Constants.Validation_schema_Field_Properties_ValidationRegex].ToString(), eventPropertyValue))
+                    {
+                        validationErrors.Add(validationProperty[Constants.Validation_schema_Field_Properties_ErrorMessage].ToString());
+                    }
                 }
 
                 if (validationErrors.Any())
@@ -74,17 +83,29 @@ namespace flight.etl.app.Services
                     throw new ValidationErrorException(String.Join("\n", validationErrors.ToArray()));
                 }
             }
+            catch (EventTypeMissingException e)
+            {
+                Debug.WriteLine("Invalid event data " + eventData.ToString());
+                Debug.WriteLine(e.Message);
+                return EventValidationResult.UnknownEventFound;
+            }
             catch (Exception e)
             {
                 Debug.WriteLine("Invalid event data " + eventData.ToString());
-                Debug.WriteLine(e.Message);                
+                Debug.WriteLine(e.Message);
+                return EventValidationResult.ValidationFailed;
             }
                         
-            return true;
+            return EventValidationResult.ValidationSuccess;
         }
 
         public bool ValidateEventPropertyByRegex(string regex, string eventPropertyValue)
         {
+            if (string.IsNullOrEmpty(regex))
+            {
+                return true;
+            }
+
             var match = Regex.Match(eventPropertyValue, regex, RegexOptions.IgnoreCase);
             return match.Success;
         }

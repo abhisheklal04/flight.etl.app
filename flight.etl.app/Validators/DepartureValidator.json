@@ -3,7 +3,7 @@
   "title": "Departure Event JSON Schema Validator",
   "properties": [
     {
-      "name": "eventType",
+      "name" :  "eventType",
       "type": "string",
       "validationRegex": "",
       "errorMessage": "Invalid event type",
@@ -12,14 +12,14 @@
     {
       "name": "timeStamp",
       "type": "string",
-      "validationRegex": "",
+      "validationRegex": "\\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[1-2]\\d|3[0-1])T(?:[0-1]\\d|2[0-3]):[0-5]\\d:[0-5]\\dZ",
       "errorMessage": "Invalid time stamp",
       "isRequired": "true"
     },
     {
       "name": "flight",
       "type": "string",
-      "validationRegex": "",
+      "validationRegex": "/^([a-zA-Z0-9_-]){5}$/",
       "errorMessage": "Invalid flight number",
       "isRequired": "true"
     },
@@ -33,7 +33,7 @@
     {
       "name": "passengers",
       "type": "integer",
-      "validationRegex": "",
+      "validationRegex": "^\\d+$",
       "errorMessage": "Invalid passengers field",
       "isRequired": "true"
     }

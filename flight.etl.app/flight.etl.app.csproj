@@ -35,4 +35,13 @@
     <Folder Include="Logs\" />
     <Folder Include="Helpers\" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="Validators\ArrivalValidator.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Validators\DepartureValidator.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 </Project>

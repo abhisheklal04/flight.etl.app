@@ -6,7 +6,9 @@ namespace flight.etl.app.Common
 {
     public class Constants
     {
+        public static string Unknown_EventType = "Unknown";
         public static string EventData_Field_EventType = "eventType";
+        public static string EventData_Field_Flight = "flight";
 
         public static string Validation_schema_Field_Properties = "properties";
         public static string Validation_schema_Field_Properties_Type = "type";

@@ -22,5 +22,7 @@ namespace flight.etl.app.Pipelines.Interface
         FlightDataSettings FlightDataSettings { get; set; }
 
         long ProcessingTimeStamp { get; set; }
+
+        List<string> PipelineSummary { get; set; }
     }
 }
