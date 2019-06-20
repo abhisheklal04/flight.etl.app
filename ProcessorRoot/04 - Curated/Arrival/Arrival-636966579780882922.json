@@ -1,0 +1,16 @@
+[
+  {
+    "eventType": "Arrival",
+    "timeStamp": "2017-07-03 15:09:44Z",
+    "flight": "AAV732",
+    "delayed": "24:10",
+    "passengers": "248"
+  },
+  {
+    "eventType": "Arrival",
+    "timeStamp": "2018-07-04 01:00:00Z",
+    "flight": "AAV253",
+    "delayed": "03:01",
+    "passengers": "177"
+  }
+]

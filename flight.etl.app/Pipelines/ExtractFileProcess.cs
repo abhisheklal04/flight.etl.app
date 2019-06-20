@@ -33,7 +33,7 @@ namespace flight.etl.app.Pipelines
 
             if (filePath == null)
             {
-                throw new Exception("no file available to to start extract process");
+                throw new Exception("no file available to start extract process");
             }
 
             SetInput(filePath);            
@@ -57,23 +57,28 @@ namespace flight.etl.app.Pipelines
 
                 string contents = File.ReadAllText(_filePath);
 
-                _eventList = ParseEventJsonData(contents);
+                //var movedToRawDirectory = Path.Combine(_flightDataSettings.BaseDirectory, _flightDataSettings.RawDirectory);
+                //Directory.CreateDirectory(movedToRawDirectory);
+                //Directory.Move(_filePath, movedToRawDirectory + "/" + fileName);
+                //string contents = File.ReadAllText(movedToRawDirectory + "/" + fileName);
 
-                //var movedFilePath = Path.Combine(FlightDataSettings.BaseDirectory, FlightDataSettings.RawDirectory + "/" + fileName);
-                //Directory.Move(_filePath, movedFilePath);
+                try
+                {
+                    _eventList = JArray.Parse(contents);
+                }
+                catch (Exception e)
+                {
+                    throw new InvalidJsonInputException("Invalid Json input file format detected");
+                }                
 
                 IsComplete = true;
+
                 _pipelineSummary.Add("Total Number of events found in batch file: " + _eventList.Count);
             }
             catch (Exception e)
             {
-                _logger.LogError(e.Message);
-            }            
-        }
-
-        JArray ParseEventJsonData(string contents)
-        {
-            return JArray.Parse(contents);            
+                throw e;
+            }                     
         }
     }
 }

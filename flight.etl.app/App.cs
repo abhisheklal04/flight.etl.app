@@ -32,29 +32,37 @@ namespace flight.etl.app
         {
             foreach (string currentFile in Directory.EnumerateFiles(Path.Combine(_flightDataSettings.BaseDirectory, _flightDataSettings.InputDirectory)))
             {
-                _logger.LogInformation("Batch Processing started of file :: " + currentFile);
+                try
+                {
+                    _logger.LogInformation("Batch Processing started of file :: " + currentFile);
 
-                var batchProcessTimer = Stopwatch.StartNew();
-                
-                var fileProcessingTimeStamp = DateTime.Now.Ticks;
-                List<string> pipelineSummary = new List<string>();
+                    var batchProcessTimer = Stopwatch.StartNew();
 
-                Pipeline flightEtlPipeline = new Pipeline();
+                    var fileProcessingTimeStamp = DateTime.Now.Ticks;
+                    List<string> pipelineSummary = new List<string>();
 
-                flightEtlPipeline.Add(new ExtractFileProcess(pipelineSummary, _flightDataSettings, currentFile, _logger));
-                flightEtlPipeline.Add(new TransformEventsProcess(pipelineSummary, _flightEventValidationService, _logger));
-                flightEtlPipeline.Add(new LoadEventsToFileProcess(pipelineSummary, _flightDataSettings, fileProcessingTimeStamp, _logger));
+                    Pipeline flightEtlPipeline = new Pipeline();
 
-                flightEtlPipeline.Run();
+                    flightEtlPipeline.Add(new ExtractFileProcess(pipelineSummary, _flightDataSettings, currentFile, _logger));
+                    flightEtlPipeline.Add(new TransformEventsProcess(pipelineSummary, _flightEventValidationService, _logger));
+                    flightEtlPipeline.Add(new LoadEventsToFileProcess(pipelineSummary, _flightDataSettings, fileProcessingTimeStamp, _logger));
 
-                batchProcessTimer.Stop();
+                    flightEtlPipeline.Run();
 
-                pipelineSummary.Add("Time in milliseconds to process batch " + batchProcessTimer.ElapsedMilliseconds);
+                    batchProcessTimer.Stop();
 
-                _logger.LogInformation("Batch Processing Summary of file :: " + currentFile);
-                _logger.LogInformation(string.Join(System.Environment.NewLine, pipelineSummary.ToArray()));
+                    pipelineSummary.Add("Time in milliseconds to process batch " + batchProcessTimer.ElapsedMilliseconds);
 
-                _logger.LogInformation("Batch Processing ended");
+                    _logger.LogInformation("Batch Processing Summary of file :: " + currentFile);
+                    _logger.LogInformation(string.Join(System.Environment.NewLine, pipelineSummary.ToArray()));
+
+                    _logger.LogInformation("Batch Processing ended");
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e.Message);
+                    _logger.LogError("Batch file processing terminated.");
+                }
             }
         }
     }
