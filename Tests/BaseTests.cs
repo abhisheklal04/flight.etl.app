@@ -14,9 +14,10 @@ namespace Tests
         {
             flightDataSettings = CreateFakeFlightDataSettings();
             CreateTestDirectories();
+            CopyTestInputFilesToInputDirectory();
         }
 
-        FlightDataSettings CreateFakeFlightDataSettings()
+        public FlightDataSettings CreateFakeFlightDataSettings()
         {
             return new FlightDataSettings()
             {
@@ -31,7 +32,6 @@ namespace Tests
 
         public void CreateTestDirectories()
         {
-            var flightDataSettings = CreateFakeFlightDataSettings();
             Directory.CreateDirectory(flightDataSettings.BaseDirectory);
             Directory.CreateDirectory(Path.Combine(flightDataSettings.BaseDirectory, flightDataSettings.InputDirectory));
             Directory.CreateDirectory(Path.Combine(flightDataSettings.BaseDirectory, flightDataSettings.RawDirectory));
@@ -44,7 +44,8 @@ namespace Tests
         {
             foreach (var file in Directory.EnumerateFiles("TestFiles", "*.json"))
             {
-                File.Copy(file, Path.Combine(flightDataSettings.BaseDirectory, flightDataSettings.InputDirectory), true);
+                var fileName = Path.GetFileName(file);
+                File.Copy(file, Path.Combine(flightDataSettings.BaseDirectory, flightDataSettings.InputDirectory + "/" + fileName), true);
             }
         }
 

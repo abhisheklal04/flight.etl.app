@@ -18,7 +18,8 @@ namespace flight.etl.app.Pipelines
 
         public bool IsComplete { get; private set; }
 
-        public FlightDataSettings _flightDataSettings { get; set; }
+        FlightDataSettings _flightDataSettings { get; set; }
+
         public List<string> _pipelineSummary { get; set; }
 
         ILogger _logger;
@@ -29,11 +30,11 @@ namespace flight.etl.app.Pipelines
 
             _pipelineSummary = pipelineSummary;
 
-            _flightDataSettings = flightDataSettings ?? throw new Exception("Flight Data directory Settings has not been set");
+            _flightDataSettings = flightDataSettings ?? throw new InvalidAppSettingsException("Flight Data directory Settings has not been set");
 
-            if (fileToExtractEventData == null)
+            if (string.IsNullOrEmpty(fileToExtractEventData))
             {
-                throw new Exception("no file available to start extract process");
+                throw new FileNotFoundException("no file available to start extract process");
             }
 
             SetInput(fileToExtractEventData);            
@@ -42,6 +43,11 @@ namespace flight.etl.app.Pipelines
         public void SetInput(object fileToExtractEventData)
         {
             _fileToExtractEventData = (string)fileToExtractEventData;
+
+            if (string.IsNullOrEmpty(_fileToExtractEventData))
+            {
+                throw new FileNotFoundException("no file available to start extract process");
+            }
         }
 
         public void Connect(IPipelineProcess next)
