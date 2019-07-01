@@ -9,6 +9,7 @@ using System.Text;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
+using flight.etl.app.Helpers;
 
 namespace flight.etl.app.Services
 {
@@ -24,7 +25,7 @@ namespace flight.etl.app.Services
             _flightDataSettings = options.Value;
         }
 
-        public void LoadJsonValidators()
+        public void LoadFlightEventJsonValidators()
         {
             try
             {
@@ -41,6 +42,11 @@ namespace flight.etl.app.Services
 
                     _logger.LogInformation((string)validationSchema[Constants.EventData_Field_EventType] + " validation schema is registered ");
                 }
+
+                if (_validators == null || !_validators.Keys.Any())
+                {
+                    throw new FileLoadException("Unable to load validators");
+                }
             }
             catch (Exception e)
             {
@@ -54,14 +60,15 @@ namespace flight.etl.app.Services
             var validationResult = new ValidationResult();
             try
             {
+                var validationErrors = new List<string>();
                 var eventType = eventData[Constants.EventData_Field_EventType].ToString();
+                var validatorForEventType = _validators[eventType];
+                JArray validationProperties = (JArray)validatorForEventType[Constants.Validation_schema_Field_Properties];
+
                 if (!_validators.ContainsKey(eventType))
                 {
                     throw new EventTypeMissingException("Unknown event type found");
-                }
-                var validatorForEventType = _validators[eventType];
-
-                JArray validationProperties = (JArray)validatorForEventType[Constants.Validation_schema_Field_Properties];
+                }                
 
                 int numberOfRequiredProperties = validationProperties.Where(x => (string)x["isRequired"] == "true").Count();
 
@@ -70,7 +77,6 @@ namespace flight.etl.app.Services
                     throw new MinimumRequiredFieldsUnavailableException("Minimum number of required fields for event data are not present");
                 }
 
-                var validationErrors = new List<string>();
                 foreach (JObject validationProperty in validationProperties)
                 {
                     var eventPropertyValue = eventData[validationProperty[Constants.Validation_schema_Field_Properties_Name].ToString()].ToString();
@@ -80,7 +86,7 @@ namespace flight.etl.app.Services
                         validationErrors.Add(validationProperty[Constants.Validation_schema_Field_Properties_ErrorMessage].ToString());
                     }
 
-                    if (!ValidateEventPropertyByRegex(validationProperty[Constants.Validation_schema_Field_Properties_ValidationRegex].ToString(), eventPropertyValue))
+                    if (!PatternMatcherHelper.ValidateEventPropertyByRegex(validationProperty[Constants.Validation_schema_Field_Properties_ValidationRegex].ToString(), eventPropertyValue))
                     {
                         validationErrors.Add(validationProperty[Constants.Validation_schema_Field_Properties_ErrorMessage].ToString());
                     }
@@ -107,15 +113,6 @@ namespace flight.etl.app.Services
             return validationResult;
         }
 
-        public bool ValidateEventPropertyByRegex(string regex, string eventPropertyValue)
-        {
-            if (string.IsNullOrEmpty(regex))
-            {
-                return true;
-            }
-
-            var match = Regex.Match(eventPropertyValue, regex, RegexOptions.IgnoreCase);
-            return match.Success;
-        }
+        
     }
 }

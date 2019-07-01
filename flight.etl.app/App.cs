@@ -36,7 +36,7 @@ namespace flight.etl.app
 
             if (filesToProcess.Count() > 0)
             {
-                _flightEventValidationService.LoadJsonValidators();
+                _flightEventValidationService.LoadFlightEventJsonValidators();
             }
             else
             {                
