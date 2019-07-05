@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace Tests
@@ -47,6 +48,30 @@ namespace Tests
                 var fileName = Path.GetFileName(file);
                 File.Copy(file, Path.Combine(flightDataSettings.BaseDirectory, flightDataSettings.InputDirectory + "/" + fileName), true);
             }
+        }
+
+        public string GetValidFileFromInputDirectory()
+        {
+            var inputDirectory = Path.Combine(flightDataSettings.BaseDirectory, flightDataSettings.InputDirectory);
+            var files = Directory.EnumerateFiles(inputDirectory, "valid.json");
+            if (files.Any())
+            {
+                return files.FirstOrDefault();
+            }
+
+            return null;
+        }
+
+        public string GetInValidJsonFileFromInputDirectory()
+        {
+            var inputDirectory = Path.Combine(flightDataSettings.BaseDirectory, flightDataSettings.InputDirectory);
+            var files = Directory.EnumerateFiles(inputDirectory, "invalidFormat.json");
+            if (files.Any())
+            {
+                return files.FirstOrDefault();
+            }
+
+            return null;
         }
 
     }

@@ -4,7 +4,8 @@ using System.Text;
 
 namespace Tests.Pipelines
 {
-    class LoadEventsProcessTests
+    public class LoadEventsProcessTests
     {
+
     }
 }

@@ -14,30 +14,7 @@ namespace Tests.Pipelines
 {
     public class ExtractFileProcessTests : BaseTests
     {
-        string GetValidFileFromInputDirectory()
-        {
-            var inputDirectory = Path.Combine(flightDataSettings.BaseDirectory, flightDataSettings.InputDirectory);
-            var files = Directory.EnumerateFiles(inputDirectory, "valid.json");
-            if (files.Any())
-            {
-                return files.FirstOrDefault();
-            }
-
-            return null;
-        }
-
-        string GetInValidJsonFileFromInputDirectory()
-        {
-            var inputDirectory = Path.Combine(flightDataSettings.BaseDirectory, flightDataSettings.InputDirectory);
-            var files = Directory.EnumerateFiles(inputDirectory, "invalidFormat.json");
-            if (files.Any())
-            {
-                return files.FirstOrDefault();
-            }
-
-            return null;
-        }
-
+        
         ExtractFileProcess GetProcess(string fileName)
         {
             var mockLogger = new Mock<ILogger<ExtractFileProcess>>();
@@ -108,14 +85,12 @@ namespace Tests.Pipelines
         }
 
         [Fact]
-        public void should_extract_file_data_and_moves_it_to_raw_directory()
+        public void should_extract_file_data_move_it_to_raw_directory_and_send_output_to_next()
         {
             var mockLogger = new Mock<ILogger<ExtractFileProcess>>();
             var pipelineSummary = new List<string>();
             var file = GetValidFileFromInputDirectory();
             var process = new ExtractFileProcess(pipelineSummary, flightDataSettings, file, mockLogger.Object);
-            var mockNextPipeline = new Mock<IPipelineProcess>();
-            process.Connect(mockNextPipeline.Object);
             process.Process();
             Assert.True(process.IsComplete);
         }
